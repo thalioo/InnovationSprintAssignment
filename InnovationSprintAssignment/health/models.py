@@ -3,9 +3,15 @@ from django.contrib.auth.models import User
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.utils.translation import gettext_lazy as _
 
-
 class UserTemps(models.Model):
 	#Define a many to one relationship with the UserProfile Model
+	def setActiveStatus(temperature):
+		HEALTHY = 'HEALTHY'
+		FEVER = 'ONGOINGFEVER'
+		if temperature>=models.FloatField(37) : 
+			return HEALTHY
+		else: 
+			return FEVER
 	userId = models.ForeignKey(User, on_delete=models.CASCADE)
 	temperature = models.FloatField(default=36.6,
         validators=[MaxValueValidator(42), MinValueValidator(35)])
@@ -13,12 +19,13 @@ class UserTemps(models.Model):
 	HEALTHY = 'HEALTHY'
 	FEVER = 'ONGOINGFEVER'
 	STATUS = [ ('HEALTHY',_('Healthy')),
-			('FEVER',_('ONGOINGFEVER')),
+			('FEVER',_('Fever')),
 		]
+
 	active_status = models.CharField(
 	    max_length=8,
 	    choices=STATUS,
-	    default=HEALTHY,
+	    default=setActiveStatus(temperature),
 	)
 	class Meta:
 		#Creates mutliple key
