@@ -12,10 +12,10 @@ class UserTemps(models.Model):
 			return HEALTHY
 		else: 
 			return FEVER
-	userId = models.ForeignKey(User, on_delete=models.CASCADE)
+	user = models.ForeignKey(User, on_delete=models.CASCADE)
 	temperature = models.FloatField(default=36.6,
         validators=[MaxValueValidator(42), MinValueValidator(35)])
-	timeStamp = models.DateTimeField('date-time of temperature')
+	timeStamp = models.DateTimeField('date-time of temperature' )
 	HEALTHY = 'HEALTHY'
 	FEVER = 'ONGOINGFEVER'
 	STATUS = [ ('HEALTHY',_('Healthy')),
@@ -29,13 +29,16 @@ class UserTemps(models.Model):
 	)
 	class Meta:
 		#Creates mutliple key
-		unique_together = (("userId","timeStamp"))
+		unique_together = (("user","timeStamp"))
 
 class UserFeverSessions(models.Model):
 	# id = models.AutoField(User=True)
-	userId = models.ForeignKey(User, on_delete=models.CASCADE)
+	user = models.ForeignKey(User, on_delete=models.CASCADE)
 	startTime = models.DateTimeField('start date-time of fever session')
 	endTime = models.DateField('end date-time of fever session')
+	class Meta:
+		#Creates mutliple key
+		unique_together = (("user","startTime"))
 	def getActiveSession(self,date1,date2):
 		return self.startTime>=date1,self.endTime<=date2
 	

@@ -2,8 +2,9 @@ from django.http import HttpResponse
 from django.contrib.auth import authenticate, login
 from django.http import HttpResponseRedirect, HttpResponse
 from django.urls  import reverse
-from health.forms import UserForm
-from django.shortcuts import render
+from health.forms import UserForm,TempsForm
+from django.shortcuts import render,get_object_or_404
+from health.models import UserTemps,UserFeverSessions
 from django.contrib.auth.decorators import login_required
 
 @login_required
@@ -88,3 +89,61 @@ def user_login(request):
 	# No context variables to pass to the template system, hence the
 	# blank dictionary object...
 		return render(request, 'health/login.html', {})
+
+
+def add_temperature(request):
+	# A HTTP POST?
+	if request.user.is_authenticated:
+		if request.method == 'POST':
+			print(request.user)
+			form = TempsForm(data=request.POST)
+			# current_user = User.objects.get(username=request.user)
+			# Have we been provided with a valid form?
+			if form.is_valid():
+			# Save the new category to the database.
+				# print(form.temperature)
+				print(type(request.user))
+				current_user = User.objects.get(pk=request.user).username
+				form.user= current_user
+				form.save()
+				# form.user = current_user
+				form.save(commit=True)
+				if form.temperature>=37:
+					updateFeverSession(form)
+					setActiveStatus(form)
+				
+			# Now that the temp is saved
+			# We could give a confirmation message
+				return index(request)
+			else:
+				print('mpika')
+				print(form.errors)
+		# Will handle the bad form, new form, or no form supplied cases.
+		# Render the form with error messages (if any).
+		else: form = TempsForm()
+		return render(request, 'health/add_temperature.html', {'form': form})
+	else : 
+
+		return login(request)
+	# The supplied form contained errors -
+	# just print them to the terminal.
+def profile(request, username):
+	try:
+		user = User.objects.get(username=username)
+	except User.DoesNotExist:
+		return redirect('index')
+	userprofile = UserProfile.objects.get_or_create(user=user)[0]
+	form = UserProfileForm()
+	if request.method == 'POST':
+		form = UserProfileForm(request.POST, request.FILES, instance=userprofile)
+		if form.is_valid():
+			form.save(commit=True)
+			return redirect('profile', user.username)
+		else:
+			print(form.errors)
+	return render(request, 'health/profile.html',
+	{'userprofile': userprofile, 'form': form})
+def updateFeverSession(form):
+	session = UserFeverSessions
+	return session
+
