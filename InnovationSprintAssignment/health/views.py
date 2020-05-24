@@ -20,7 +20,7 @@ View Profile of User
 def profile(request):
 	try:
 		user = User.objects.get(username=request.user)
-		print('found')
+
 	except User.DoesNotExist:
 		return redirect('index')
 	userprofile = User.objects.get(id=user.id)
@@ -96,7 +96,7 @@ def user_login(request):
 			# If the account is valid and active, we can log the user in.
 			# We'll send the user back to the homepage.
 				login(request, user)
-				return HttpResponseRedirect(reverse('index'))
+				return HttpResponseRedirect(reverse('profile'))
 			else:
 			# An inactive account was used - no logging in!
 				return HttpResponse("Your Health account is disabled.")
@@ -162,7 +162,7 @@ class AddTempCreateView(LoginRequiredMixin,CreateView):
 		manipulateFeverSessions(self.object)
 		makeTempsInactive(self.object)
 		self.object.save()
-		return success(self.request)
+		return HttpResponseRedirect(reverse('profile'))
 
 	def get_form_kwargs(self, *args, **kwargs):
 		kwargs = super(AddTempCreateView, self).get_form_kwargs(*args, **kwargs)

@@ -35,7 +35,6 @@ class UserTemps(models.Model):
 		unique_together = (("user","timeStamp"))
 
 class UserFeverSessions(models.Model):
-	# id = models.AutoField(User=True)
 	user = models.ForeignKey(User, on_delete=models.CASCADE)
 	startTime = models.DateTimeField('start date-time of fever session')
 	endTime = models.DateTimeField(null=True, blank=True,verbose_name='end date-time of fever session')

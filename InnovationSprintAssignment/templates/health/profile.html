@@ -10,14 +10,17 @@
         {% if user.is_authenticated %}
         <h1>{{ user.username }} welcome to your profile page</h1>
         <h2>Registered Email :{{ user.email }}</h2>
+        <h3>First Name </h3>
+        <h3>Last Name</h3>
         {% endif %}
 
 {% endblock %}
 <div>
 <ul>
-<li><a href="{% url 'add_temperature' %}">Add a Temperature</a></li>
-<li><a href="{% url 'view_temperatures' %}">View Logged Temperatures</a><li>
-<li><a href="{% url 'view_active_session' %}">View Active Fever Session</a><li>
+	<li><a href="{% url 'add_temperature' %}">Add a Temperature</a></li>
+	<li><a href="{% url 'view_temperatures' %}">View Logged Temperatures</a><li>
+	<li><a href="{% url 'view_active_session' %}">View Active Fever Session</a><li>
+	<li><a href="{% url 'view_sessions_dates' %}">View Fever Sessions Between To Dates</a><li>
 </ul>
 </div>
 </body>
