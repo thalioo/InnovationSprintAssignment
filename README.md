@@ -35,16 +35,17 @@ Our Model consists of four Models.(/InnovationSprintAssignment/health/models.py)
   * active : type = BooleanField,description=True if is latest temperature submitted
   * primary_key = (user,timestamp)
 * UserFeverSessions: Stores all Fever Sessions for each User
-  *user : reference of User Object,foreign key of User
-  *startTime :type = DateTimeField,description =start date-time of fever session
-  *endTime = DateTimeField,description end date-time of fever session
-  *active_session = BooleanField,description= True if session active
+  * user : reference of User Object,foreign key of User
+  * startTime :type = DateTimeField,description =start date-time of fever session
+  * endTime = DateTimeField,description end date-time of fever session
+  * active_session = BooleanField,description= True if session active
+  * primary_key = (user,startTime)
 ### Forms(/InnovationSprintAssignment/health/forms.py)
-*TempsForm Inherits UserTemps Model. Allows adding a temperature for the user submitting the form
-*UserForm Inherits the User Model. Allows User to register
-*UserProfileForm Inherits User Model. Allows User to view and edit profile
-*SelectedSessionsForm Simple form to display sessions between two dates.
-### Views
+* TempsForm Inherits UserTemps Model. Allows adding a temperature for the user submitting the form
+* UserForm Inherits the User Model. Allows User to register
+* UserProfileForm Inherits User Model. Allows User to view and edit profile
+* SelectedSessionsForm Simple form to display sessions between two dates.
+### Views (/InnovationSprintAssignment/health/views.py)
 * profile Profile request if user is authenticated(GET)
 * register User Registration(POST) 
 * user_login User Login(POST)
@@ -62,18 +63,18 @@ To retrieve the temperatures included in a fever session, we select all temperat
 * ActiveSessionView View Active Session if exists(GET)
 ## Urls
 * (/) Index Displays the Projects Index
-* (/health) The health App, and nested inside : 
-  *('/login/') views.user_login , description = login of user
-  *('register/'),views.register,description = registration
-  *('add_temperature/'),views.AddTempCreateView,description='addes temperature
-  <img src = images/AddTemp.JPG width=200>
-  *('profile/'),views.profile,description=profile
-  <img src = images/profile.JPG width=200>
-  *('view_temperatures/'),views.TemperatureView,description=view_temperatures
-  <img src = images/viewTemps.JPG width=200>
-  *('view_active_session/)',views.ActiveSessionView,description=view_active_session
-  *('view_sessions_dates/'),views.SessionView,description =view_sessions_dates
-  <img src = images/findSessions.JPG width=200>
+* (/health) The health App, and nested inside : <br />
+(/login/) views.user_login , description = login of user<br />
+(register/),views.register,description = registration<br />
+(add_temperature/),views.AddTempCreateView,description = adds temperature<br />
+<img src = images/AddTemp.JPG width=200><br />
+(profile/),views.profile,description=shows profile<br />
+<img src = images/profile.JPG width=200><br />
+(view_temperatures/),views.TemperatureView,description=view all temperatures<br />
+<img src = images/viewTemps.JPG width=200><br />
+(view_active_session/),views.ActiveSessionView,description=view active fever session<br />
+(view_sessions_dates/),views.SessionView,description =view session between two date<br />
+<img src = images/findSessions.JPG width=200>
 
 ## Running the project
 Navigate to InnovationSprintAssignment\InnovationSprintAssignment where manage.py is located and run :
