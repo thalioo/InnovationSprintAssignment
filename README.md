@@ -3,7 +3,7 @@ This is the implementation for the project assigned by InnovationSprintAssignmen
 
 ## Getting Started
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
+These instructions will get you a copy of the project up and running on your local machine, and explaining the general functionality of the api.
 
 ## Prerequisites
 
@@ -16,9 +16,10 @@ python -m pip install Django
 * SQLite3 as a database
 
 ## About the Django Framework
-This REST-API was implemented using the Django Framework. In this particular framework the models are the representation of the database.
-The forms are classes that allow displaying a form which can display CRUD operations.
-Views are the place where the implementations of the CRUD operations are implemented.
+This REST-API was implemented using the Django Framework. 
+In this particular framework the models are the representation of the database.A model is the single, definitive source of information about your data. It contains the essential fields and behaviors of the data you’re storing. Generally, each model maps to a single database table.
+The forms are classes that allow displaying a form which can display CRUD operations.GET and POST are the only HTTP methods to use when dealing with forms.
+Views are the place where the implementations of the CRUD operations are implemented.A view is a “type” of Web page in your Django application that generally serves a specific function and has a specific template. 
 Moreover the projects implementation is stored in the Django App health.
 ### Models
 Our Model consists of four Models.(/InnovationSprintAssignment/health/models.py)
@@ -58,7 +59,7 @@ Our Model consists of four Models.(/InnovationSprintAssignment/health/models.py)
 	"startTime"
 	"endTime"
 }}
-To retrieve the temperatures included in a fever session, we select all temperatures btween startTime and endTime.s
+To retrieve the temperatures included in a fever session, we select all temperatures btween startTime and endTime.
 *  TemperatureView View all submitted temperatures(GET)
 * ActiveSessionView View Active Session if exists(GET)
 ## Urls
