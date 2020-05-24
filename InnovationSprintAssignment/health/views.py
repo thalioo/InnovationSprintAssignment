@@ -13,6 +13,9 @@ from django.views.generic.list import ListView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views import View
 
+'''
+View Profile of User
+'''
 @login_required
 def profile(request):
 	try:
@@ -31,6 +34,7 @@ def index(request):
 @login_required
 def success(request):
 	return HttpResponse("Succesully added a Temperature!")
+
 def register(request):
 # A boolean value for telling the template
 # whether the registration was successful.
@@ -67,10 +71,6 @@ def register(request):
 	'health/register.html',
 	{'user_form': user_form,
 	'registered': registered})
-		# Now sort out the UserProfile instance.
-		# Since we need to set the user attribute ourselves,
-		# we set commit=False. This delays saving the model
-		# until we're ready to avoid integrity problems.
 
 def user_login(request):
 # If the request is a HTTP POST, try to pull out the relevant information.
@@ -111,7 +111,9 @@ def user_login(request):
 	# blank dictionary object...
 		return render(request, 'health/login.html', {})
 
-
+'''
+Implements functionality to start or end a fever session according to the new temperature
+'''
 def manipulateFeverSessions(form):
 	temperature = form.temperature
 	model = UserFeverSessions()
@@ -137,6 +139,9 @@ def manipulateFeverSessions(form):
 			model.active_session = False
 			model.pk = user_sesions.pk
 			model.save()
+'''
+Function to ensure  that all previous temperatures are not the active
+'''
 def makeTempsInactive(form):
 	try:
 		user_temps = UserTemps.objects.filter(user=form.user)
@@ -144,7 +149,9 @@ def makeTempsInactive(form):
 		user_temps = UserTemps.objects.filter(active=True).update(active=False)
 	except UserFeverSessions.DoesNotExist:
 		user_sesions = None
-
+'''
+Implements the functionality of adding a Temperature
+'''
 class AddTempCreateView(LoginRequiredMixin,CreateView):
 	template_name = 'health/add_temperature.html'
 	form_class = TempsForm
@@ -162,7 +169,9 @@ class AddTempCreateView(LoginRequiredMixin,CreateView):
 		kwargs['user'] = self.request.user
 		return kwargs
 
-
+'''
+Displays fever sessions and temperatures between two dates
+'''
 class SessionView(LoginRequiredMixin,FormView):
 	template_name = 'health/view_sessions_dates.html'
 	form_class = SelectedSessionsForm
@@ -185,29 +194,21 @@ class SessionView(LoginRequiredMixin,FormView):
 			for t in q:
 				res[i]['temps'][x.timeStamp]=(t.temperature)
 			i+=1
-		# res[self.user.user.id] = 
-		# res = []
-		# for y in session_temperatures:
-		# 	res.append(y.temperature)
-		# print(session_temperatures)
-		# print('-----')
-		# print(res)
-		# print('-----')
-
-		# except: return index(self.request)
 		return JsonResponse(res)
 
-
+'''
+Displays all temperatures submitted by the user
+'''
 class TemperatureView(LoginRequiredMixin,ListView):
 	template_name = 'health/temp-list.html'
-	# queryset = UserTemps.objects.get(pk=request.user.id)
 	context_object_name = 'temps'
 	def get_queryset(self):
 		return UserTemps.objects.filter(user=self.request.user)
-
+'''
+Displays Active Session if Any
+'''
 class ActiveSessionView(LoginRequiredMixin,ListView):
 	template_name = 'health/active-session-view.html'
-	# queryset = UserFeverSessions.objects.filter(active_session=True)
 	context_object_name = 'activeSession'
 	def get_queryset(self):
 		return UserFeverSessions.objects.filter(active_session=True)
