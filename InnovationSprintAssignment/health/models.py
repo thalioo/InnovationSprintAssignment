@@ -27,6 +27,9 @@ class UserTemps(models.Model):
 			self.current_health = 'HEALTHY'
 		else: self.current_health = 'ONGOINGFEVER'
 		super(UserTemps, self).save(*args, **kwargs)
+	def __str__(self):
+
+		return '%s %s %s' % (self.temperature,self.timeStamp,self.current_health)
 	class Meta:
 		#Creates mutliple key
 		unique_together = (("user","timeStamp"))
@@ -37,6 +40,9 @@ class UserFeverSessions(models.Model):
 	startTime = models.DateTimeField('start date-time of fever session')
 	endTime = models.DateTimeField(null=True, blank=True,verbose_name='end date-time of fever session')
 	active_session = models.BooleanField(default=False)
+	def __str__(self):
+
+		return '%s' % (self.startTime)
 	class Meta:
 		#Creates mutliple key
 		unique_together = (("user","startTime"))

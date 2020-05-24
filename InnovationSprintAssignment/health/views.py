@@ -1,20 +1,36 @@
 from django.http import HttpResponse
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
-
-from django.http import HttpResponseRedirect, HttpResponse
+# from rest_framework_swagger.views import get_swagger_view
+from django.http import HttpResponseRedirect, HttpResponse,JsonResponse
 from django.urls  import reverse
-from health.forms import UserForm,TempsForm
+from health.forms import UserForm,TempsForm,UserProfileForm,SelectedSessionsForm
 from django.shortcuts import render,get_object_or_404
 from health.models import UserTemps,UserFeverSessions
 from django.contrib.auth.decorators import login_required
-from django.views.generic.edit import CreateView
+from django.views.generic.edit import CreateView,FormView
+from django.views.generic.list import ListView
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views import View
 
-
+@login_required
+def profile(request):
+	try:
+		user = User.objects.get(username=request.user)
+		print('found')
+	except User.DoesNotExist:
+		return redirect('index')
+	userprofile = User.objects.get(id=user.id)
+	form = UserProfileForm()
+	return render(request, 'health/profile.html',
+	{'userprofile': userprofile, 'form': form})
 
 @login_required
 def index(request):
     return HttpResponse("Hello, you are at the HealthApp HomePage")
+@login_required
+def success(request):
+	return HttpResponse("Succesully added a Temperature!")
 def register(request):
 # A boolean value for telling the template
 # whether the registration was successful.
@@ -94,11 +110,13 @@ def user_login(request):
 	# No context variables to pass to the template system, hence the
 	# blank dictionary object...
 		return render(request, 'health/login.html', {})
+
+
 def manipulateFeverSessions(form):
 	temperature = form.temperature
 	model = UserFeverSessions()
 	try:
-		user_sesions = UserFeverSessions.objects.get(pk=form.user.id)
+		user_sesions = UserFeverSessions.objects.filter(pk=form.user.id)
 		user_sesions = UserFeverSessions.objects.get(active_session=True)
 		print('found')
 	except UserFeverSessions.DoesNotExist:
@@ -111,14 +129,23 @@ def manipulateFeverSessions(form):
 		model.endTime =None
 		model.save()
 	else :
+		#if user has an active fever session and needs to close it
 		if user_sesions and temperature < 37:
 			model.startTime = user_sesions.startTime
 			model.endTime = form.timeStamp
 			model.user=form.user
 			model.active_session = False
 			model.pk = user_sesions.pk
-			model.save()	
-class AddTempCreateView(CreateView):
+			model.save()
+def makeTempsInactive(form):
+	try:
+		user_temps = UserTemps.objects.filter(user=form.user)
+		print(user_temps)
+		user_temps = UserTemps.objects.filter(active=True).update(active=False)
+	except UserFeverSessions.DoesNotExist:
+		user_sesions = None
+
+class AddTempCreateView(LoginRequiredMixin,CreateView):
 	template_name = 'health/add_temperature.html'
 	form_class = TempsForm
 	def form_valid(self, form):
@@ -126,13 +153,9 @@ class AddTempCreateView(CreateView):
 		self.object.user = self.request.user
 		self.object.active = True
 		manipulateFeverSessions(self.object)
+		makeTempsInactive(self.object)
 		self.object.save()
-		return index(self.request)
-
-	def get_initial(self, *args, **kwargs):
-		initial = super(AddTempCreateView, self).get_initial(**kwargs)
-		initial['title'] = 'My Title'
-		return initial
+		return success(self.request)
 
 	def get_form_kwargs(self, *args, **kwargs):
 		kwargs = super(AddTempCreateView, self).get_form_kwargs(*args, **kwargs)
@@ -140,59 +163,51 @@ class AddTempCreateView(CreateView):
 		return kwargs
 
 
-# def add_temperature(request):
-# 	# A HTTP POST?
-# 	if request.user.is_authenticated:
-# 		if request.method == 'POST':
-# 			print(request.user.id)
-# 			form = TempsForm(data=request.POST)
-# 			# current_user = User.objects.get(username=request.user)
-# 			# Have we been provided with a valid form?
-# 			form.user_id = request.user.id
-# 			if form.is_valid():
-# 			# Save the new category to the database.
-# 				# print(form.temperature)
-				
-# 				form.save(commit=False)
-# 				current_user= User.objects.get(id=request.user.id)
-# 				form.user = User.objects.get(id=self.request.user.id)
-# 				form.user_id = current_user.id
-# 				# form.save(commit=True)
-# 				# if form.temperature>=37:
-# 				# 	updateFeverSession(form)
-# 				# 	setActiveStatus(form)
-				
-# 			# Now that the temp is saved
-# 			# We could give a confirmation message
-# 				return index(request)
-# 			else:
-# 				print('mpika')
-# 				print(form.errors)
-# 		# Will handle the bad form, new form, or no form supplied cases.
-# 		# Render the form with error messages (if any).
-# 		else: 
-# 			form = TempsForm()
-# 		return render(request, 'health/add_temperature.html', {'form': form})
-# 	else : 
+class SessionView(LoginRequiredMixin,FormView):
+	template_name = 'health/view_sessions_dates.html'
+	form_class = SelectedSessionsForm
+	success_url = '/index/'
+	def form_valid(self, form):
+		# form =SelectedSessionsForm(self.request.body)
+		sessions = UserFeverSessions.objects.filter(user = self.request.user,startTime__range=[form.cleaned_data['startTime'],form.cleaned_data['endTime']],
+			endTime__range=[form.cleaned_data['startTime'],form.cleaned_data['endTime']])
+		# session_temps = UserTemps.objects.filter()
+		session_temperatures = []
+		res = {}
+		i=0
+		for x in sessions:
+			res[i] = {}
+			res[i]['id']=x.id
+			res[i]['temps']={}
+			res[i]['startTime']=x.startTime
+			res[i]['endTime']=x.endTime
+			q = UserTemps.objects.filter(user=self.request.user,timeStamp__gte=x.startTime,timeStamp__lt=x.endTime)
+			for t in q:
+				res[i]['temps'][x.timeStamp]=(t.temperature)
+			i+=1
+		# res[self.user.user.id] = 
+		# res = []
+		# for y in session_temperatures:
+		# 	res.append(y.temperature)
+		# print(session_temperatures)
+		# print('-----')
+		# print(res)
+		# print('-----')
 
-# 		return index(request)
-# 	# The supplied form contained errors -
-# 	# just print them to the terminal.
-def profile(request, username):
-	try:
-		user = User.objects.get(username=username)
-	except User.DoesNotExist:
-		return redirect('index')
-	userprofile = UserProfile.objects.get_or_create(user=user)[0]
-	form = UserProfileForm()
-	if request.method == 'POST':
-		form = UserProfileForm(request.POST, request.FILES, instance=userprofile)
-		if form.is_valid():
-			form.save(commit=True)
-			return redirect('profile', user.username)
-		else:
-			print(form.errors)
-	return render(request, 'health/profile.html',
-	{'userprofile': userprofile, 'form': form})
+		# except: return index(self.request)
+		return JsonResponse(res)
 
 
+class TemperatureView(LoginRequiredMixin,ListView):
+	template_name = 'health/temp-list.html'
+	# queryset = UserTemps.objects.get(pk=request.user.id)
+	context_object_name = 'temps'
+	def get_queryset(self):
+		return UserTemps.objects.filter(user=self.request.user)
+
+class ActiveSessionView(LoginRequiredMixin,ListView):
+	template_name = 'health/active-session-view.html'
+	# queryset = UserFeverSessions.objects.filter(active_session=True)
+	context_object_name = 'activeSession'
+	def get_queryset(self):
+		return UserFeverSessions.objects.filter(active_session=True)

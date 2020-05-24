@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>HealthApp</title>
+</head>
+<body>
+<h1>Find Session Between Two DAtes</h1>
+<div>
+<form id="temperature_form" method="post" action="/health/view_sessions_dates/">
+{% csrf_token %}
+{% for hidden in form.hidden_fields %}
+{{ hidden }}
+{% endfor %}
+{% for field in form.visible_fields %}s
+{{ field.errors }}
+{{ field.help_text }}
+{{ field }}
+{% endfor %}
+<input type="submit" name="submit" value="View" />
+</form>
+</div>
+</body>
+</html>
