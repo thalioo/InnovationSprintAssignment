@@ -1,11 +1,16 @@
 from django.http import HttpResponse
 from django.contrib.auth import authenticate, login
+from django.contrib.auth.models import User
+
 from django.http import HttpResponseRedirect, HttpResponse
 from django.urls  import reverse
 from health.forms import UserForm,TempsForm
 from django.shortcuts import render,get_object_or_404
 from health.models import UserTemps,UserFeverSessions
 from django.contrib.auth.decorators import login_required
+from django.views.generic.edit import CreateView
+
+
 
 @login_required
 def index(request):
@@ -90,43 +95,89 @@ def user_login(request):
 	# blank dictionary object...
 		return render(request, 'health/login.html', {})
 
+class AddTempCreateView(CreateView):
+	template_name = 'health/add_temperature.html'
+	form_class = TempsForm
+	def form_valid(self, form):
+		self.object = form.save(commit=False)
+		self.object.user = self.request.user
+		self.object.active = True
+		temperature = self.object.temperature
+		model = UserFeverSessions()
+		try:
+			user_sesions = UserFeverSessions.objects.get(pk=self.object.user.id)
+			user_sesions = UserFeverSessions.objects.get(active_session=True)
+		except UserFeverSessions.DoesNotExist:
+			user_sesions = None
+		#if user has no fever sessions and needs to create one 
+		if not user_sesions and temperature >=37:
+			model.user=self.object.user
+			model.startTime = self.object.timeStamp
+			model.active_session = True
+			model.endTime =None
+			model.save()
+		else :
+			if user_sesions and temperature < 37:
+				model.startTime = user_sesions.startTime
+				model.endTime = self.object.timeStamp
+				model.user=self.object.user
+				model.active_session = False
+				model.pk = user_sesions.pk
+				model.save()				
 
-def add_temperature(request):
-	# A HTTP POST?
-	if request.user.is_authenticated:
-		if request.method == 'POST':
-			print(request.user)
-			form = TempsForm(data=request.POST)
-			# current_user = User.objects.get(username=request.user)
-			# Have we been provided with a valid form?
-			if form.is_valid():
-			# Save the new category to the database.
-				# print(form.temperature)
-				print(type(request.user))
-				current_user = User.objects.get(pk=request.user).username
-				form.user= current_user
-				form.save()
-				# form.user = current_user
-				form.save(commit=True)
-				if form.temperature>=37:
-					updateFeverSession(form)
-					setActiveStatus(form)
+
+		self.object.save()
+		return index(self.request)
+
+	def get_initial(self, *args, **kwargs):
+		initial = super(AddTempCreateView, self).get_initial(**kwargs)
+		initial['title'] = 'My Title'
+		return initial
+
+	def get_form_kwargs(self, *args, **kwargs):
+		kwargs = super(AddTempCreateView, self).get_form_kwargs(*args, **kwargs)
+		kwargs['user'] = self.request.user
+		return kwargs
+
+
+# def add_temperature(request):
+# 	# A HTTP POST?
+# 	if request.user.is_authenticated:
+# 		if request.method == 'POST':
+# 			print(request.user.id)
+# 			form = TempsForm(data=request.POST)
+# 			# current_user = User.objects.get(username=request.user)
+# 			# Have we been provided with a valid form?
+# 			form.user_id = request.user.id
+# 			if form.is_valid():
+# 			# Save the new category to the database.
+# 				# print(form.temperature)
 				
-			# Now that the temp is saved
-			# We could give a confirmation message
-				return index(request)
-			else:
-				print('mpika')
-				print(form.errors)
-		# Will handle the bad form, new form, or no form supplied cases.
-		# Render the form with error messages (if any).
-		else: form = TempsForm()
-		return render(request, 'health/add_temperature.html', {'form': form})
-	else : 
+# 				form.save(commit=False)
+# 				current_user= User.objects.get(id=request.user.id)
+# 				form.user = User.objects.get(id=self.request.user.id)
+# 				form.user_id = current_user.id
+# 				# form.save(commit=True)
+# 				# if form.temperature>=37:
+# 				# 	updateFeverSession(form)
+# 				# 	setActiveStatus(form)
+				
+# 			# Now that the temp is saved
+# 			# We could give a confirmation message
+# 				return index(request)
+# 			else:
+# 				print('mpika')
+# 				print(form.errors)
+# 		# Will handle the bad form, new form, or no form supplied cases.
+# 		# Render the form with error messages (if any).
+# 		else: 
+# 			form = TempsForm()
+# 		return render(request, 'health/add_temperature.html', {'form': form})
+# 	else : 
 
-		return login(request)
-	# The supplied form contained errors -
-	# just print them to the terminal.
+# 		return index(request)
+# 	# The supplied form contained errors -
+# 	# just print them to the terminal.
 def profile(request, username):
 	try:
 		user = User.objects.get(username=username)
@@ -143,7 +194,5 @@ def profile(request, username):
 			print(form.errors)
 	return render(request, 'health/profile.html',
 	{'userprofile': userprofile, 'form': form})
-def updateFeverSession(form):
-	session = UserFeverSessions
-	return session
+
 

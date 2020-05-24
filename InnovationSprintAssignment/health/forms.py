@@ -3,6 +3,11 @@ from django import forms
 from django.contrib.auth.models import User
 from health.models import UserTemps
 from django.contrib.admin import widgets
+import datetime
+def default_start_time():
+    now = datetime.datetime.now
+    start = now.replace(hour=22, minute=0, second=0, microsecond=0)
+    return start if start > now else start + timedelta(days=1) 
 
 class UserForm(forms.ModelForm):
 	password = forms.CharField(widget=forms.PasswordInput())
@@ -15,9 +20,20 @@ class UserProfileForm(forms.ModelForm):
 		fields = ('username', 'email',)
 class TempsForm(forms.ModelForm):
 	temperature = forms.FloatField(help_text = 'Please Input Temperature')
-	timeStamp = forms.DateTimeField()
+	# timeStamp = forms.DateTimeField(default=default_start_time())
 	# user = forms.ModelChoiceField(queryset=User.objects.none(), widget=forms.HiddenInput)
+	def __init__(self, *args, **kwargs):
+		self._user = kwargs.pop('user')
+		super(TempsForm, self).__init__(*args, **kwargs)
+
+	def save(self, commit=True):
+		inst = super(TempsForm, self).save(commit=False)
+		inst.user = self._user
+		if commit:
+			inst.save()
+			self.save_m2m()
+		return inst
 	class Meta:
 		model = UserTemps
-		exclude=('user',)
-		fields = ('temperature','timeStamp',)
+		exclude=('user','active')
+		fields = ('temperature',)
