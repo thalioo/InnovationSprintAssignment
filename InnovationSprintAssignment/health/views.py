@@ -94,7 +94,30 @@ def user_login(request):
 	# No context variables to pass to the template system, hence the
 	# blank dictionary object...
 		return render(request, 'health/login.html', {})
-
+def manipulateFeverSessions(form):
+	temperature = form.temperature
+	model = UserFeverSessions()
+	try:
+		user_sesions = UserFeverSessions.objects.get(pk=form.user.id)
+		user_sesions = UserFeverSessions.objects.get(active_session=True)
+		print('found')
+	except UserFeverSessions.DoesNotExist:
+		user_sesions = None
+	#if user has no fever sessions and needs to create one 
+	if not user_sesions and temperature >=37:
+		model.user=form.user
+		model.startTime = form.timeStamp
+		model.active_session = True
+		model.endTime =None
+		model.save()
+	else :
+		if user_sesions and temperature < 37:
+			model.startTime = user_sesions.startTime
+			model.endTime = form.timeStamp
+			model.user=form.user
+			model.active_session = False
+			model.pk = user_sesions.pk
+			model.save()	
 class AddTempCreateView(CreateView):
 	template_name = 'health/add_temperature.html'
 	form_class = TempsForm
@@ -102,30 +125,7 @@ class AddTempCreateView(CreateView):
 		self.object = form.save(commit=False)
 		self.object.user = self.request.user
 		self.object.active = True
-		temperature = self.object.temperature
-		model = UserFeverSessions()
-		try:
-			user_sesions = UserFeverSessions.objects.get(pk=self.object.user.id)
-			user_sesions = UserFeverSessions.objects.get(active_session=True)
-		except UserFeverSessions.DoesNotExist:
-			user_sesions = None
-		#if user has no fever sessions and needs to create one 
-		if not user_sesions and temperature >=37:
-			model.user=self.object.user
-			model.startTime = self.object.timeStamp
-			model.active_session = True
-			model.endTime =None
-			model.save()
-		else :
-			if user_sesions and temperature < 37:
-				model.startTime = user_sesions.startTime
-				model.endTime = self.object.timeStamp
-				model.user=self.object.user
-				model.active_session = False
-				model.pk = user_sesions.pk
-				model.save()				
-
-
+		manipulateFeverSessions(self.object)
 		self.object.save()
 		return index(self.request)
 
