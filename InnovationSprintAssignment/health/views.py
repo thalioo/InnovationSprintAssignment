@@ -185,6 +185,7 @@ class SessionView(LoginRequiredMixin,FormView):
 		res = {}
 		i=0
 		for x in sessions:
+
 			res[i] = {}
 			res[i]['id']=x.id
 			res[i]['temps']={}
@@ -192,7 +193,8 @@ class SessionView(LoginRequiredMixin,FormView):
 			res[i]['endTime']=x.endTime
 			q = UserTemps.objects.filter(user=self.request.user,timeStamp__gte=x.startTime,timeStamp__lt=x.endTime)
 			for t in q:
-				res[i]['temps'][x.timeStamp]=(t.temperature)
+				print(t)
+				res[i]['temps'][str(t.timeStamp)]=(t.temperature)
 			i+=1
 		return JsonResponse(res)
 
